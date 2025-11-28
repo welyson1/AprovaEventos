@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aprova Eventos - Gestão do Processo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        govbr: {
+                            primary: '#1351B4',
+                            secondary: '#0C326F',
+                            accent: '#2670E8',
+                            success: '#168821',
+                            warning: '#FFCD07',
+                            danger: '#E52207'
+                        }
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-up {
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(100%); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .progress-bar {
+            transition: width 0.5s ease-out;
+        }
+        
+        .card-hover {
+            transition: all 0.2s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f0f;
+            animation: confetti-fall 3s ease-in-out forwards;
+        }
+        
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50">
+    
+    <!-- Header -->
+    <header class="sticky top-0 z-40 bg-white border-b border-slate-200">
+        <div class="max-w-6xl mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <a href="nova-solicitacao.html" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center transition-colors">
+                        <i data-lucide="arrow-left" class="w-5 h-5 text-slate-600"></i>
+                    </a>
+                    <div>
+                        <h1 class="font-bold text-slate-800">Gestão do Processo</h1>
+                        <p class="text-xs text-slate-500" id="eventName">Carregando...</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="eventos-publicos.html" class="hidden sm:flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                        <i data-lucide="globe" class="w-4 h-4"></i>
+                        <span>Ver Eventos</span>
+                    </a>
+                    <div class="w-9 h-9 bg-govbr-primary rounded-full flex items-center justify-center text-white text-sm font-semibold" id="userAvatar">
+                        JS
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 py-6">
+        
+        <!-- Event Summary Card -->
+        <div class="bg-gradient-to-r from-govbr-primary to-govbr-accent rounded-2xl p-6 text-white mb-6 fade-in">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-start gap-4">
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <i data-lucide="calendar-check" class="w-8 h-8"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold" id="summaryEventName">Carregando...</h2>
+                        <div class="flex flex-wrap items-center gap-3 mt-2 text-sm text-blue-100">
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="map-pin" class="w-4 h-4"></i>
+                                <span id="summaryLocal">-</span>
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="calendar" class="w-4 h-4"></i>
+                                <span id="summaryData">-</span>
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="users" class="w-4 h-4"></i>
+                                <span id="summaryPublico">-</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div id="statusBadge" class="self-start md:self-center">
+                    <!-- Status badge will be rendered here -->
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="mt-6">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium">Progresso para o Alvará</span>
+                    <span class="text-sm font-bold" id="progressPercent">0%</span>
+                </div>
+                <div class="h-3 bg-white/20 rounded-full overflow-hidden">
+                    <div id="progressBar" class="progress-bar h-full bg-white rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fast Track Banner (for low risk) -->
+        <div id="fastTrackBanner" class="hidden bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl p-6 text-white mb-6 fade-in">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                    <i data-lucide="zap" class="w-8 h-8"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-xl font-bold">🎉 Aprovação Automática!</h3>
+                    <p class="text-green-100 mt-1">Seu evento foi classificado como <strong>baixo risco</strong> pela Lei de Liberdade Econômica (Lei 13.874/19).</p>
+                </div>
+                <button onclick="downloadAlvara()" class="px-6 py-3 bg-white text-green-600 font-semibold rounded-xl hover:bg-green-50 transition-colors flex items-center gap-2">
+                    <i data-lucide="download" class="w-5 h-5"></i>
+                    <span class="hidden sm:inline">Baixar Alvará</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Documents Column -->
+            <div class="lg:col-span-2 space-y-4">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="file-text" class="w-5 h-5 text-govbr-primary"></i>
+                        Documentos e Autorizações
+                    </h3>
+                    <span class="text-sm text-slate-500" id="docsCount">0 de 0 concluídos</span>
+                </div>
+                
+                <div id="documentsList" class="space-y-3">
+                    <!-- Documents will be rendered here -->
+                </div>
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="space-y-4">
+                
+                <!-- Payment Card -->
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden card-hover">
+                    <div class="p-4 border-b border-slate-100 bg-slate-50">
+                        <h4 class="font-semibold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="credit-card" class="w-5 h-5 text-govbr-primary"></i>
+                            Taxas Unificadas
+                        </h4>
+                    </div>
+                    <div class="p-4">
+                        <div class="space-y-3 mb-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-500">ISS Evento</span>
+                                <span class="font-medium text-slate-800" id="taxISS">R$ 0,00</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-500">Taxa de Expediente</span>
+                                <span class="font-medium text-slate-800" id="taxExpediente">R$ 0,00</span>
+                            </div>
+                            <div class="border-t border-slate-200 pt-3 flex justify-between">
+                                <span class="font-semibold text-slate-800">Total</span>
+                                <span class="font-bold text-lg text-govbr-primary" id="taxTotal">R$ 0,00</span>
+                            </div>
+                        </div>
+                        <button id="btnPagar" onclick="openPaymentModal()" class="w-full py-3 bg-govbr-primary text-white font-semibold rounded-xl hover:bg-govbr-secondary transition-colors flex items-center justify-center gap-2">
+                            <i data-lucide="qr-code" class="w-5 h-5"></i>
+                            Pagar via Pix
+                        </button>
+                        <p class="text-xs text-slate-400 text-center mt-2">Pagamento unificado • Sem filas</p>
+                    </div>
+                </div>
+                
+                <!-- Timeline Card -->
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden card-hover">
+                    <div class="p-4 border-b border-slate-100 bg-slate-50">
+                        <h4 class="font-semibold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="clock" class="w-5 h-5 text-govbr-primary"></i>
+                            Histórico
+                        </h4>
+                    </div>
+                    <div class="p-4">
+                        <div id="timeline" class="space-y-4">
+                            <!-- Timeline will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Help Card -->
+                <div class="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl border border-slate-200 p-4">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 bg-govbr-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="help-circle" class="w-5 h-5 text-govbr-primary"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-slate-800">Precisa de ajuda?</h4>
+                            <p class="text-sm text-slate-500 mt-1">Nossa equipe está pronta para auxiliar no processo.</p>
+                            <button class="mt-3 text-sm text-govbr-primary font-medium flex items-center gap-1 hover:underline">
+                                <i data-lucide="message-circle" class="w-4 h-4"></i>
+                                Falar com atendente
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for Document -->
+    <div id="documentModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="absolute inset-x-4 bottom-0 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg">
+            <div class="bg-white rounded-t-3xl md:rounded-2xl shadow-2xl max-h-[80vh] md:max-h-[80vh] overflow-y-auto slide-up">
+                <div class="p-6 min-h-0">
+                    <!-- Modal Header -->
+                    <div class="flex items-start justify-between mb-6">
+                        <div class="flex items-center gap-3">
+                            <div id="modalIcon" class="w-12 h-12 bg-govbr-primary/10 rounded-xl flex items-center justify-center">
+                                <i data-lucide="file-text" class="w-6 h-6 text-govbr-primary"></i>
+                            </div>
+                            <div>
+                                <h3 id="modalTitle" class="font-bold text-lg text-slate-800">Documento</h3>
+                                <p id="modalOrgao" class="text-sm text-slate-500">Órgão</p>
+                            </div>
+                        </div>
+                        <button onclick="closeModal()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center transition-colors">
+                            <i data-lucide="x" class="w-5 h-5 text-slate-600"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Modal Content -->
+                    <div id="modalContent">
+                        <!-- Content will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closePaymentModal()"></div>
+        <div class="absolute inset-x-4 bottom-0 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-sm">
+            <div class="bg-white rounded-t-3xl md:rounded-2xl shadow-2xl max-h-[80vh] overflow-y-auto slide-up">
+                <div class="p-6 text-center min-h-0">
+                    <div class="w-16 h-16 bg-govbr-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="qr-code" class="w-8 h-8 text-govbr-primary"></i>
+                    </div>
+                    <h3 class="font-bold text-xl text-slate-800 mb-2">Pagamento Pix</h3>
+                    <p class="text-slate-500 text-sm mb-6">Escaneie o QR Code ou copie o código</p>
+                    
+                    <!-- Fake QR Code -->
+                    <div class="bg-slate-100 rounded-2xl p-6 mb-4">
+                        <div class="w-48 h-48 mx-auto bg-white rounded-xl flex items-center justify-center border-2 border-dashed border-slate-300">
+                            <div class="text-center">
+                                <i data-lucide="scan" class="w-12 h-12 text-slate-400 mx-auto mb-2"></i>
+                                <p class="text-xs text-slate-400">QR Code Simulado</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p class="text-2xl font-bold text-govbr-primary mb-4" id="paymentAmount">R$ 0,00</p>
+                    
+                    <button onclick="simulatePayment()" class="w-full py-3 bg-govbr-success text-white font-semibold rounded-xl hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+                        <i data-lucide="check" class="w-5 h-5"></i>
+                        Simular Pagamento
+                    </button>
+                    
+                    <button onclick="closePaymentModal()" class="w-full py-3 mt-2 text-slate-600 font-medium hover:bg-slate-50 rounded-xl transition-colors">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+                <!-- Alvará Modal -->
+                <div id="alvaraModal" class="fixed inset-0 z-50 hidden">
+                    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeAlvaraModal()"></div>
+                    <div class="absolute inset-x-4 bottom-0 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg">
+                        <div class="bg-white rounded-t-3xl md:rounded-2xl shadow-2xl slide-up">
+                            <div class="p-6">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div>
+                                        <h3 class="font-bold text-lg text-slate-800">Declaração de Permissão - Alvará</h3>
+                                        <p class="text-sm text-slate-500">Documento gerado automaticamente ao final do processo</p>
+                                    </div>
+                                    <button onclick="closeAlvaraModal()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center transition-colors">
+                                        <i data-lucide="x" class="w-5 h-5 text-slate-600"></i>
+                                    </button>
+                                </div>
+                                <div id="alvaraContent" class="space-y-4">
+                                    <!-- Content populated by JS -->
+                                </div>
+                                <div class="mt-4 flex gap-2">
+                                    <button onclick="printAlvara()" class="flex-1 py-3 bg-govbr-primary text-white rounded-xl">Imprimir / Salvar</button>
+                                    <button onclick="closeAlvaraModal()" class="flex-1 py-3 bg-slate-50 rounded-xl">Fechar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+    <script src="gestao-processo.js"></script>
+</body>
+</html>

@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aprova Eventos - Eventos Públicos de Londrina</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        govbr: {
+                            primary: '#1351B4',
+                            secondary: '#0C326F',
+                            accent: '#2670E8',
+                            success: '#168821',
+                            warning: '#FFCD07',
+                            danger: '#E52207'
+                        }
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        .fade-in {
+            animation: fadeIn 0.4s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+        }
+        
+        .filter-chip {
+            transition: all 0.2s ease;
+        }
+        
+        .filter-chip.active {
+            background-color: #1351B4;
+            color: white;
+            border-color: #1351B4;
+        }
+        
+        .slide-up {
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(100%); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #1351B4 0%, #2670E8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50">
+    
+    <!-- Header -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-slate-200">
+        <div class="max-w-6xl mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-govbr-primary rounded-xl flex items-center justify-center">
+                        <i data-lucide="calendar" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-slate-800">Eventos Londrina</h1>
+                        <p class="text-xs text-slate-500">Agenda cultural oficial</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="nova-solicitacao.html" class="hidden sm:flex items-center gap-2 px-4 py-2 bg-govbr-primary text-white text-sm font-medium rounded-lg hover:bg-govbr-secondary transition-colors">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        Criar Evento
+                    </a>
+                    <button onclick="openSearch()" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center transition-colors">
+                        <i data-lucide="search" class="w-5 h-5 text-slate-600"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Banner -->
+    <section class="bg-gradient-to-r from-govbr-primary via-govbr-accent to-govbr-primary text-white py-12 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div>
+                    <h2 class="text-3xl md:text-4xl font-bold mb-2">Descubra Londrina</h2>
+                    <p class="text-blue-100 text-lg">Eventos regularizados com transparência total</p>
+                    <div class="flex items-center gap-4 mt-4">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="shield-check" class="w-5 h-5 text-green-300"></i>
+                            <span class="text-sm">100% Legalizados</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="map-pin" class="w-5 h-5 text-green-300"></i>
+                            <span class="text-sm">Geolocalização</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+                    <div class="text-center px-4">
+                        <p class="text-3xl font-bold" id="statTotal">0</p>
+                        <p class="text-xs text-blue-200">Eventos este mês</p>
+                    </div>
+                    <div class="w-px h-12 bg-white/20"></div>
+                    <div class="text-center px-4">
+                        <p class="text-3xl font-bold" id="statHoje">0</p>
+                        <p class="text-xs text-blue-200">Acontecendo hoje</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Filters -->
+    <section class="sticky top-16 z-30 bg-white border-b border-slate-200 py-4 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <button onclick="filterEvents('todos')" class="filter-chip active flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-full text-sm font-medium whitespace-nowrap transition-colors" data-filter="todos">
+                    <i data-lucide="grid-3x3" class="w-4 h-4"></i>
+                    Todos
+                </button>
+                <button onclick="filterEvents('hoje')" class="filter-chip flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-full text-sm font-medium whitespace-nowrap bg-white text-slate-600 hover:bg-slate-50 transition-colors" data-filter="hoje">
+                    <i data-lucide="calendar-check" class="w-4 h-4"></i>
+                    Hoje
+                </button>
+                <button onclick="filterEvents('fds')" class="filter-chip flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-full text-sm font-medium whitespace-nowrap bg-white text-slate-600 hover:bg-slate-50 transition-colors" data-filter="fds">
+                    <i data-lucide="sun" class="w-4 h-4"></i>
+                    Fim de Semana
+                </button>
+                <button onclick="filterEvents('gratuito')" class="filter-chip flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-full text-sm font-medium whitespace-nowrap bg-white text-slate-600 hover:bg-slate-50 transition-colors" data-filter="gratuito">
+                    <i data-lucide="heart" class="w-4 h-4"></i>
+                    Gratuito
+                </button>
+                <button onclick="filterEvents('shows')" class="filter-chip flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-full text-sm font-medium whitespace-nowrap bg-white text-slate-600 hover:bg-slate-50 transition-colors" data-filter="shows">
+                    <i data-lucide="music" class="w-4 h-4"></i>
+                    Shows
+                </button>
+                <button onclick="filterEvents('cultura')" class="filter-chip flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-full text-sm font-medium whitespace-nowrap bg-white text-slate-600 hover:bg-slate-50 transition-colors" data-filter="cultura">
+                    <i data-lucide="palette" class="w-4 h-4"></i>
+                    Cultura
+                </button>
+                <button onclick="filterEvents('gastronomia')" class="filter-chip flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-full text-sm font-medium whitespace-nowrap bg-white text-slate-600 hover:bg-slate-50 transition-colors" data-filter="gastronomia">
+                    <i data-lucide="utensils" class="w-4 h-4"></i>
+                    Gastronomia
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Events Grid -->
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="font-bold text-slate-800 text-lg" id="gridTitle">Todos os Eventos</h3>
+            <span class="text-sm text-slate-500" id="resultsCount">0 resultados</span>
+        </div>
+        
+        <div id="eventsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Events will be rendered here -->
+        </div>
+        
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-16">
+            <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="calendar-x" class="w-10 h-10 text-slate-400"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-800 mb-2">Nenhum evento encontrado</h3>
+            <p class="text-slate-500 mb-4">Tente outro filtro ou crie um novo evento.</p>
+            <a href="nova-solicitacao.html" class="inline-flex items-center gap-2 px-6 py-3 bg-govbr-primary text-white font-medium rounded-xl hover:bg-govbr-secondary transition-colors">
+                <i data-lucide="plus" class="w-5 h-5"></i>
+                Criar Evento
+            </a>
+        </div>
+    </main>
+
+    <!-- Floating Action Button (Mobile) -->
+    <a href="nova-solicitacao.html" class="sm:hidden fixed bottom-6 right-6 w-14 h-14 bg-govbr-primary shadow-lg rounded-full flex items-center justify-center z-50 hover:bg-govbr-secondary transition-colors">
+        <i data-lucide="plus" class="w-6 h-6 text-white"></i>
+    </a>
+
+    <!-- Event Detail Modal -->
+    <div id="eventModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeEventModal()"></div>
+        <div class="absolute inset-x-0 bottom-0 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl md:max-h-[90vh]">
+            <div class="bg-white rounded-t-3xl md:rounded-2xl shadow-2xl max-h-[90vh] md:max-h-[80vh] overflow-y-auto slide-up">
+                <!-- Modal content will be rendered here -->
+                <div id="modalContent" class="min-h-0"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Modal -->
+    <div id="searchModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeSearch()"></div>
+        <div class="absolute inset-x-4 top-20 md:inset-auto md:top-24 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-xl">
+            <div class="bg-white rounded-2xl shadow-2xl overflow-hidden slide-up">
+                <div class="p-4">
+                    <div class="flex items-center gap-3 bg-slate-100 rounded-xl px-4 py-3">
+                        <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
+                        <input 
+                            type="text" 
+                            id="searchInput"
+                            placeholder="Buscar eventos em Londrina..."
+                            class="flex-1 bg-transparent outline-none text-slate-800 placeholder-slate-400"
+                            oninput="handleSearch(this.value)"
+                        >
+                        <button onclick="closeSearch()" class="text-slate-400 hover:text-slate-600">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="searchResults" class="max-h-80 overflow-y-auto">
+                    <!-- Search results will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide
+        lucide.createIcons();
+
+        // Mock events data (extended)
+        const mockEvents = [
+            {
+                id: 1,
+                nome: "Festival Gastronômico do Lago",
+                descricao: "Uma celebração da culinária local com os melhores chefs de Londrina. Venha experimentar pratos típicos e inovadores às margens do Lago Igapó.",
+                local: "Lago Igapó",
+                endereco: "Av. Higienópolis - Lago Igapó, Londrina",
+                data: "2025-12-15",
+                horario: "11:00 - 22:00",
+                publico: "500+",
+                preco: "Entrada Gratuita",
+                gratuito: true,
+                categoria: "gastronomia",
+                status: "aprovado",
+                imagem: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&h=400&fit=crop",
+                organizador: "Associação Gastronômica de Londrina",
+                tags: ["comida", "família", "ao ar livre"]
+            },
+            {
+                id: 2,
+                nome: "Feira de Artesanato Regional",
+                descricao: "Artesãos de toda a região expõem suas obras no coração de Londrina. Peças únicas em cerâmica, madeira, tecido e muito mais.",
+                local: "Calçadão",
+                endereco: "Rua Sergipe - Centro, Londrina",
+                data: "2025-12-20",
+                horario: "09:00 - 18:00",
+                publico: "200",
+                preco: "Gratuito",
+                gratuito: true,
+                categoria: "cultura",
+                status: "aprovado",
+                imagem: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=400&fit=crop",
+                organizador: "Prefeitura de Londrina",
+                tags: ["artesanato", "compras", "cultura"]
+            },
+            {
+                id: 3,
+                nome: "Show Sertanejo - Dupla Raiz",
+                descricao: "A maior dupla sertaneja do Paraná em apresentação única. Uma noite inesquecível com os maiores sucessos.",
+                local: "Espaço Eventos Premium",
+                endereco: "Rod. Celso Garcia Cid, km 380",
+                data: "2025-12-22",
+                horario: "21:00 - 03:00",
+                publico: "2000",
+                preco: "A partir de R$ 80",
+                gratuito: false,
+                categoria: "shows",
+                status: "aprovado",
+                imagem: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&h=400&fit=crop",
+                organizador: "Prime Eventos",
+                tags: ["música", "sertanejo", "noite"]
+            },
+            {
+                id: 4,
+                nome: "Corrida de Rua - 10km Londrina",
+                descricao: "Tradicional corrida de rua com percurso pelos principais pontos turísticos da cidade. Categorias para todas as idades.",
+                local: "Zerão",
+                endereco: "Av. Leste-Oeste - Zerão, Londrina",
+                data: "2025-12-28",
+                horario: "06:30",
+                publico: "1500",
+                preco: "R$ 60 (inscrição)",
+                gratuito: false,
+                categoria: "esporte",
+                status: "aprovado",
+                imagem: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=600&h=400&fit=crop",
+                organizador: "Londrina Running Club",
+                tags: ["esporte", "corrida", "saúde"]
+            },
+            {
+                id: 5,
+                nome: "Exposição de Arte Contemporânea",
+                descricao: "Mostra coletiva de artistas locais explorando temas urbanos e sustentabilidade através de diferentes mídias.",
+                local: "Museu de Arte de Londrina",
+                endereco: "Rua Sergipe, 640 - Centro",
+                data: "2025-12-10",
+                horario: "10:00 - 20:00",
+                publico: "100",
+                preco: "R$ 10 (inteira)",
+                gratuito: false,
+                categoria: "cultura",
+                status: "aprovado",
+                imagem: "https://images.unsplash.com/photo-1536924940846-227afb31e2a5?w=600&h=400&fit=crop",
+                organizador: "MAL - Museu de Arte",
+                tags: ["arte", "exposição", "cultura"]
+            },
+            {
+                id: 6,
+                nome: "Food Truck Festival",
+                descricao: "Reunião dos melhores food trucks da região com música ao vivo e área kids. Diversas opções gastronômicas.",
+                local: "Estacionamento Boulevard",
+                endereco: "Av. Madre Leônia Milito, 1377",
+                data: "2025-12-14",
+                horario: "17:00 - 23:00",
+                publico: "800",
+                preco: "Entrada Gratuita",
+                gratuito: true,
+                categoria: "gastronomia",
+                status: "aprovado",
+                imagem: "https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?w=600&h=400&fit=crop",
+                organizador: "Food Truck Association",
+                tags: ["comida", "família", "música"]
+            },
+            {
+                id: 7,
+                nome: "Teatro Infantil - O Pequeno Príncipe",
+                descricao: "Adaptação do clássico de Saint-Exupéry para os pequenos. Uma viagem mágica pelo universo da imaginação.",
+                local: "Teatro Ouro Verde",
+                endereco: "Rua Piauí, 230 - Centro",
+                data: "2025-12-21",
+                horario: "15:00 e 18:00",
+                publico: "400",
+                preco: "R$ 30 (inteira)",
+                gratuito: false,
+                categoria: "cultura",
+                status: "aprovado",
+                imagem: "https://images.unsplash.com/photo-1503095396549-807759245b35?w=600&h=400&fit=crop",
+                organizador: "Cia. Teatro Londrina",
+                tags: ["teatro", "infantil", "família"]
+            },
+            {
+                id: 8,
+                nome: "Natal Iluminado - Lago Igapó",
+                descricao: "Decoração natalina especial com milhares de luzes, apresentações musicais e chegada do Papai Noel.",
+                local: "Lago Igapó",
+                endereco: "Av. Higienópolis - Lago Igapó",
+                data: "2025-12-25",
+                horario: "18:00 - 23:00",
+                publico: "5000",
+                preco: "Gratuito",
+                gratuito: true,
+                categoria: "cultura",
+                status: "aprovado",
+                imagem: "https://images.unsplash.com/photo-1512389142860-9c449e58a814?w=600&h=400&fit=crop",
+                organizador: "Prefeitura de Londrina",
+                tags: ["natal", "família", "gratuito"]
+            }
+        ];
+
+        // Current filter state
+        let currentFilter = 'todos';
+        let allEvents = [];
+
+        // Load events
+        function loadEvents() {
+            // Merge mock events with user-created events from localStorage
+            const db = JSON.parse(localStorage.getItem('aprovaEventos_db')) || { events: [] };
+            
+            allEvents = [...mockEvents];
+            
+            // Add approved events from localStorage
+            db.events.forEach(event => {
+                if (event.status === 'aprovado' || event.status === 'aprovado_automatico') {
+                    if (!allEvents.find(e => e.id === event.id)) {
+                        allEvents.push({
+                            ...event,
+                            descricao: `Evento ${event.nome} regularizado através do sistema Aprova Eventos.`,
+                            horario: "A definir",
+                            preco: "Consultar organizador",
+                            gratuito: false,
+                            categoria: event.musica ? 'shows' : 'cultura',
+                            organizador: db.user?.nome || "Organizador",
+                            tags: ["novo", "regularizado"]
+                        });
+                    }
+                }
+            });
+
+            updateStats();
+            renderEvents();
+        }
+
+        function updateStats() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayEvents = allEvents.filter(e => e.data === today).length;
+            
+            document.getElementById('statTotal').textContent = allEvents.length;
+            document.getElementById('statHoje').textContent = todayEvents;
+        }
+
+        function filterEvents(filter) {
+            currentFilter = filter;
+            
+            // Update active filter chip
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.classList.remove('active');
+                if (chip.dataset.filter === filter) {
+                    chip.classList.add('active');
+                }
+            });
+
+            renderEvents();
+        }
+
+        function renderEvents() {
+            const grid = document.getElementById('eventsGrid');
+            const emptyState = document.getElementById('emptyState');
+            const gridTitle = document.getElementById('gridTitle');
+            const resultsCount = document.getElementById('resultsCount');
+            
+            // Filter events
+            let filteredEvents = [...allEvents];
+            const today = new Date();
+            
+            switch(currentFilter) {
+                case 'hoje':
+                    filteredEvents = filteredEvents.filter(e => e.data === today.toISOString().split('T')[0]);
+                    gridTitle.textContent = 'Eventos Hoje';
+                    break;
+                case 'fds':
+                    // Get next weekend
+                    const dayOfWeek = today.getDay();
+                    const daysUntilSat = (6 - dayOfWeek + 7) % 7;
+                    const saturday = new Date(today);
+                    saturday.setDate(today.getDate() + daysUntilSat);
+                    const sunday = new Date(saturday);
+                    sunday.setDate(saturday.getDate() + 1);
+                    
+                    filteredEvents = filteredEvents.filter(e => {
+                        const eventDate = new Date(e.data);
+                        return eventDate >= saturday && eventDate <= sunday;
+                    });
+                    gridTitle.textContent = 'Fim de Semana';
+                    break;
+                case 'gratuito':
+                    filteredEvents = filteredEvents.filter(e => e.gratuito);
+                    gridTitle.textContent = 'Eventos Gratuitos';
+                    break;
+                case 'shows':
+                    filteredEvents = filteredEvents.filter(e => e.categoria === 'shows');
+                    gridTitle.textContent = 'Shows e Música';
+                    break;
+                case 'cultura':
+                    filteredEvents = filteredEvents.filter(e => e.categoria === 'cultura');
+                    gridTitle.textContent = 'Cultura e Arte';
+                    break;
+                case 'gastronomia':
+                    filteredEvents = filteredEvents.filter(e => e.categoria === 'gastronomia');
+                    gridTitle.textContent = 'Gastronomia';
+                    break;
+                default:
+                    gridTitle.textContent = 'Todos os Eventos';
+            }
+
+            // Sort by date
+            filteredEvents.sort((a, b) => new Date(a.data) - new Date(b.data));
+
+            resultsCount.textContent = `${filteredEvents.length} resultado${filteredEvents.length !== 1 ? 's' : ''}`;
+
+            if (filteredEvents.length === 0) {
+                grid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            grid.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            grid.innerHTML = filteredEvents.map((event, index) => `
+                <div class="bg-white rounded-2xl overflow-hidden border border-slate-200 card-hover fade-in cursor-pointer" style="animation-delay: ${index * 0.05}s" onclick="openEventModal(${event.id})">
+                    <div class="relative">
+                        <img src="${event.imagem}" alt="${event.nome}" class="w-full h-48 object-cover">
+                        <div class="absolute top-3 left-3 flex gap-2">
+                            <span class="px-2 py-1 bg-govbr-success text-white text-xs font-medium rounded-full flex items-center gap-1">
+                                <i data-lucide="shield-check" class="w-3 h-3"></i>
+                                Regularizado
+                            </span>
+                            ${event.gratuito ? `
+                                <span class="px-2 py-1 bg-pink-500 text-white text-xs font-medium rounded-full">
+                                    Gratuito
+                                </span>
+                            ` : ''}
+                        </div>
+                        <div class="absolute bottom-3 right-3">
+                            <span class="px-3 py-1.5 bg-white/95 backdrop-blur-sm text-slate-800 text-sm font-semibold rounded-lg shadow">
+                                ${formatDateShort(event.data)}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h4 class="font-bold text-slate-800 mb-1 line-clamp-1">${event.nome}</h4>
+                        <p class="text-sm text-slate-500 flex items-center gap-1 mb-3">
+                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                            ${event.local}
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-govbr-primary">${event.preco}</span>
+                            <span class="text-xs text-slate-400">${event.publico} pessoas</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function formatDateShort(dateStr) {
+            const date = new Date(dateStr);
+            const day = date.getDate();
+            const month = date.toLocaleDateString('pt-BR', { month: 'short' });
+            return `${day} ${month}`;
+        }
+
+        function formatDateFull(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('pt-BR', { 
+                weekday: 'long',
+                day: '2-digit', 
+                month: 'long', 
+                year: 'numeric' 
+            });
+        }
+
+        // Event Modal
+        function openEventModal(eventId) {
+            const event = allEvents.find(e => e.id === eventId);
+            if (!event) return;
+
+            const modal = document.getElementById('eventModal');
+            const content = document.getElementById('modalContent');
+
+            content.innerHTML = `
+                <div class="relative">
+                    <img src="${event.imagem}" alt="${event.nome}" class="w-full h-56 md:h-72 object-cover">
+                    <button onclick="closeEventModal()" class="absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors">
+                        <i data-lucide="x" class="w-5 h-5 text-slate-600"></i>
+                    </button>
+                    <div class="absolute top-4 left-4 flex gap-2">
+                        <span class="px-3 py-1.5 bg-govbr-success text-white text-sm font-medium rounded-full flex items-center gap-1.5 shadow">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i>
+                            Alvará 100% Regularizado
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    <div class="flex items-start justify-between gap-4 mb-4">
+                        <h2 class="text-2xl font-bold text-slate-800">${event.nome}</h2>
+                        ${event.gratuito ? `
+                            <span class="px-3 py-1 bg-pink-100 text-pink-600 text-sm font-semibold rounded-full whitespace-nowrap">
+                                Gratuito
+                            </span>
+                        ` : `
+                            <span class="text-lg font-bold text-govbr-primary whitespace-nowrap">${event.preco}</span>
+                        `}
+                    </div>
+                    
+                    <p class="text-slate-600 mb-6">${event.descricao}</p>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
+                            <div class="w-10 h-10 bg-govbr-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="calendar" class="w-5 h-5 text-govbr-primary"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500">Data</p>
+                                <p class="text-sm font-medium text-slate-800">${formatDateFull(event.data)}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
+                            <div class="w-10 h-10 bg-govbr-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="clock" class="w-5 h-5 text-govbr-primary"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500">Horário</p>
+                                <p class="text-sm font-medium text-slate-800">${event.horario}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-xl col-span-2">
+                            <div class="w-10 h-10 bg-govbr-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="map-pin" class="w-5 h-5 text-govbr-primary"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500">Local</p>
+                                <p class="text-sm font-medium text-slate-800">${event.local}</p>
+                                <p class="text-xs text-slate-500 mt-0.5">${event.endereco}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-2 mb-6">
+                        ${event.tags?.map(tag => `
+                            <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">
+                                #${tag}
+                            </span>
+                        `).join('') || ''}
+                    </div>
+                    
+                    <div class="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl mb-6">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="verified" class="w-6 h-6 text-green-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-green-800">Evento Regularizado</p>
+                            <p class="text-sm text-green-600">Todas as licenças verificadas pelo sistema Aprova Eventos</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button class="flex-1 py-3 bg-govbr-primary text-white font-semibold rounded-xl hover:bg-govbr-secondary transition-colors flex items-center justify-center gap-2">
+                            <i data-lucide="ticket" class="w-5 h-5"></i>
+                            ${event.gratuito ? 'Confirmar Presença' : 'Comprar Ingresso'}
+                        </button>
+                        <button class="w-12 h-12 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center transition-colors">
+                            <i data-lucide="share-2" class="w-5 h-5 text-slate-600"></i>
+                        </button>
+                        <button class="w-12 h-12 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center transition-colors">
+                            <i data-lucide="heart" class="w-5 h-5 text-slate-600"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Lock body scroll and show modal
+            document.body.style.overflow = 'hidden';
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeEventModal() {
+            document.getElementById('eventModal').classList.add('hidden');
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }
+
+        // Search
+        function openSearch() {
+            document.getElementById('searchModal').classList.remove('hidden');
+            // Lock body scroll while search modal is open
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => document.getElementById('searchInput').focus(), 50);
+        }
+
+        function closeSearch() {
+            document.getElementById('searchModal').classList.add('hidden');
+            // Restore body scroll
+            document.body.style.overflow = '';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchResults').innerHTML = '';
+        }
+
+        function handleSearch(query) {
+            const results = document.getElementById('searchResults');
+            
+            if (query.length < 2) {
+                results.innerHTML = '';
+                return;
+            }
+
+            const filtered = allEvents.filter(e => 
+                e.nome.toLowerCase().includes(query.toLowerCase()) ||
+                e.local.toLowerCase().includes(query.toLowerCase()) ||
+                e.descricao?.toLowerCase().includes(query.toLowerCase())
+            );
+
+            if (filtered.length === 0) {
+                results.innerHTML = `
+                    <div class="p-4 text-center text-slate-500">
+                        Nenhum evento encontrado para "${query}"
+                    </div>
+                `;
+                return;
+            }
+
+            results.innerHTML = filtered.slice(0, 5).map(event => `
+                <div class="flex items-center gap-3 p-4 hover:bg-slate-50 cursor-pointer border-b border-slate-100" onclick="openEventModal(${event.id}); closeSearch();">
+                    <img src="${event.imagem}" class="w-16 h-16 rounded-lg object-cover">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-semibold text-slate-800 truncate">${event.nome}</h4>
+                        <p class="text-sm text-slate-500 flex items-center gap-1">
+                            <i data-lucide="map-pin" class="w-3 h-3"></i>
+                            ${event.local}
+                        </p>
+                        <p class="text-xs text-govbr-primary font-medium">${formatDateShort(event.data)}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadEvents);
+
+        // Keyboard shortcut for search
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeEventModal();
+                closeSearch();
+            }
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                openSearch();
+            }
+        });
+    </script>
+</body>
+</html>

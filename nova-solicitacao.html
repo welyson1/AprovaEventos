@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aprova Eventos - Nova Solicitação</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        govbr: {
+                            primary: '#1351B4',
+                            secondary: '#0C326F',
+                            accent: '#2670E8',
+                            success: '#168821',
+                            warning: '#FFCD07',
+                            danger: '#E52207'
+                        }
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+            z-index: 1;
+        }
+
+        .leaflet-container {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .bottom-sheet {
+            transition: transform 0.3s ease-out;
+        }
+
+        .bottom-sheet.expanded {
+            transform: translateY(0);
+        }
+
+        .bottom-sheet.collapsed {
+            transform: translateY(calc(100% - 120px));
+        }
+
+        .chat-message {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .typing-indicator span {
+            animation: blink 1.4s infinite both;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes blink {
+
+            0%,
+            60%,
+            100% {
+                opacity: 0.3;
+            }
+
+            30% {
+                opacity: 1;
+            }
+        }
+
+        .zone-marker {
+            background: white;
+            border-radius: 50%;
+            padding: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .pulse-ring {
+            animation: pulseRing 1.5s infinite;
+        }
+
+        @keyframes pulseRing {
+            0% {
+                transform: scale(0.8);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        /* Custom scrollbar */
+        .chat-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body class="h-screen w-screen overflow-hidden bg-slate-100">
+
+    <!-- Map Container -->
+    <div id="map" class="absolute inset-0"></div>
+
+    <!-- Top Bar -->
+    <div class="absolute top-0 left-0 right-0 z-10 p-4">
+        <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg p-4 max-w-2xl mx-auto">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <a href="login.html"
+                        class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center transition-colors">
+                        <i data-lucide="arrow-left" class="w-5 h-5 text-slate-600"></i>
+                    </a>
+                    <div>
+                        <h1 class="font-bold text-slate-800">Nova Solicitação</h1>
+                        <p class="text-xs text-slate-500">Selecione o local no mapa</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div
+                        class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-govbr-success/10 text-govbr-success rounded-full text-xs font-medium">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                        <span>Lei 13.874/19</span>
+                    </div>
+                    <a href="eventos-publicos.html"
+                        class="w-10 h-10 bg-govbr-primary/10 hover:bg-govbr-primary/20 rounded-xl flex items-center justify-center transition-colors">
+                        <i data-lucide="calendar" class="w-5 h-5 text-govbr-primary"></i>
+                    </a>
+                    <a href="gestao-processo.html" title="Ver solicitações" class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 bg-white/90 hover:bg-slate-100 rounded-full text-xs font-medium border border-slate-100 ml-2">
+                        <i data-lucide="file-text" class="w-4 h-4 text-slate-600"></i>
+                        <span class="text-slate-700">Ver solicitações</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Zone Legend -->
+    <div class="absolute top-28 left-4 z-10">
+        <div class="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-3 text-xs space-y-2">
+            <p class="font-semibold text-slate-700 mb-2">Legenda de Zonas</p>
+            <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                <span class="text-slate-600">Área Pública</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                <span class="text-slate-600">Área Privada</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                <span class="text-slate-600">Área Ambiental</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Hint -->
+    <div id="startHint"
+        class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none transition-opacity duration-500">
+        <div
+            class="bg-white/95 backdrop-blur-sm shadow-2xl rounded-2xl p-5 flex items-center gap-4 border border-slate-100 max-w-xs">
+            <div class="relative">
+                <div class="absolute inset-0 bg-govbr-primary/20 rounded-full animate-ping"></div>
+                <div class="relative w-12 h-12 bg-govbr-primary/10 rounded-full flex items-center justify-center">
+                    <i data-lucide="map-pin" class="w-6 h-6 text-govbr-primary"></i>
+                </div>
+            </div>
+            <div>
+                <h3 class="font-bold text-slate-800 text-sm">Comece por aqui!</h3>
+                <p class="text-xs text-slate-500 mt-1">Clique no mapa para marcar o local exato do seu evento.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Sheet - Chat Interface -->
+    <div id="bottomSheet"
+        class="bottom-sheet absolute bottom-0 left-0 right-0 z-20 bg-white rounded-t-3xl shadow-2xl max-h-[75vh] collapsed">
+
+        <!-- Handle -->
+        <div class="flex justify-center pt-3 pb-2 cursor-pointer" onclick="toggleBottomSheet()">
+            <div class="w-12 h-1.5 bg-slate-300 rounded-full"></div>
+        </div>
+
+        <!-- Header -->
+        <div class="px-4 pb-3 border-b border-slate-100">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 bg-gradient-to-br from-govbr-primary to-govbr-accent rounded-xl flex items-center justify-center">
+                        <i data-lucide="message-square" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-slate-800">Assistente Virtual</h2>
+                        <p class="text-xs text-govbr-success flex items-center gap-1">
+                            <span class="w-2 h-2 bg-govbr-success rounded-full animate-pulse"></span>
+                            Online
+                        </p>
+                    </div>
+                </div>
+                <div id="locationBadge" class="hidden items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full text-xs">
+                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-govbr-primary"></i>
+                    <span id="locationText" class="text-slate-600 max-w-[150px] truncate"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Messages -->
+        <div id="chatContainer" class="chat-container px-4 py-4 overflow-y-auto"
+            style="max-height: calc(75vh - 200px);">
+            <div id="chatMessages" class="space-y-4">
+                <!-- Initial message will be added by JS -->
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div id="inputArea" class="px-4 pb-6 pt-2 border-t border-slate-100 bg-white">
+            <!-- Dynamic input will be rendered here -->
+        </div>
+    </div>
+
+    <!-- Quick Actions Floating Button -->
+    <div class="absolute bottom-32 right-4 z-10 space-y-3">
+        <button onclick="centerOnLondrina()"
+            class="w-12 h-12 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-slate-50 transition-colors">
+            <i data-lucide="navigation" class="w-5 h-5 text-govbr-primary"></i>
+        </button>
+        <button onclick="getCurrentLocation()"
+            class="w-12 h-12 bg-govbr-primary shadow-lg rounded-full flex items-center justify-center hover:bg-govbr-secondary transition-colors">
+            <i data-lucide="crosshair" class="w-5 h-5 text-white"></i>
+        </button>
+    </div>
+
+    <script>
+        // Initialize Lucide
+        lucide.createIcons();
+
+        // Global state
+        let map;
+        let currentMarker;
+        let selectedLocation = null;
+        let chatStep = 0;
+        let eventData = {
+            nome: '',
+            local: '',
+            lat: null,
+            lng: null,
+            zona: null,
+            publico: null,
+            estrutura: null,
+            musica: null,
+            menores: null
+        };
+
+        // Londrina coordinates
+        const LONDRINA_CENTER = [-23.3045, -51.1696];
+
+        // Mock zones in Londrina (simplified polygons)
+        const ZONES = {
+            lagoIgapo: {
+                name: "Lago Igapó",
+                type: "publica_ambiental",
+                color: "#f59e0b",
+                bounds: [[-23.33, -51.19], [-23.32, -51.17]],
+                description: "Área Pública + Ambiental",
+                organs: ["SEMA", "CMTU", "Bombeiros", "PM"]
+            },
+            zerinho: {
+                name: "Zerão",
+                type: "publica",
+                color: "#3b82f6",
+                bounds: [[-23.295, -51.185], [-23.285, -51.175]],
+                description: "Área Pública",
+                organs: ["CMTU", "Bombeiros", "PM"]
+            },
+            calçadao: {
+                name: "Calçadão Centro",
+                type: "publica",
+                color: "#3b82f6",
+                bounds: [[-23.315, -51.17], [-23.305, -51.155]],
+                description: "Área Pública - Centro",
+                organs: ["CMTU", "Bombeiros", "PM"]
+            },
+            catuai: {
+                name: "Região Catuaí",
+                type: "privada",
+                color: "#22c55e",
+                bounds: [[-23.35, -51.175], [-23.34, -51.16]],
+                description: "Área Privada",
+                organs: ["Bombeiros", "PM"]
+            },
+            aurora: {
+                name: "Gleba Palhano",
+                type: "privada",
+                color: "#22c55e",
+                bounds: [[-23.34, -51.195], [-23.325, -51.18]],
+                description: "Área Privada",
+                organs: ["Bombeiros", "PM"]
+            }
+        };
+
+        // Initialize map
+        function initMap() {
+            map = L.map('map', {
+                zoomControl: false
+            }).setView(LONDRINA_CENTER, 14);
+
+            // Add tile layer (OpenStreetMap)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add zoom control to bottom right
+            L.control.zoom({ position: 'topright' }).addTo(map);
+
+            // Draw zone rectangles
+            Object.values(ZONES).forEach(zone => {
+                L.rectangle(zone.bounds, {
+                    color: zone.color,
+                    weight: 2,
+                    fillColor: zone.color,
+                    fillOpacity: 0.2
+                }).addTo(map).bindPopup(`<b>${zone.name}</b><br>${zone.description}`);
+            });
+
+            // Map click handler
+            map.on('click', onMapClick);
+
+            // Add markers for points of interest
+            addPOIMarkers();
+        }
+
+        function addPOIMarkers() {
+            const pois = [
+                { lat: -23.3245, lng: -51.1869, name: "Lago Igapó", icon: "🏞️" },
+                { lat: -23.2900, lng: -51.1800, name: "Zerão", icon: "🏟️" },
+                { lat: -23.3103, lng: -51.1628, name: "Calçadão", icon: "🛍️" }
+            ];
+
+            pois.forEach(poi => {
+                const icon = L.divIcon({
+                    html: `<div class="text-2xl">${poi.icon}</div>`,
+                    className: 'poi-marker',
+                    iconSize: [30, 30]
+                });
+                L.marker([poi.lat, poi.lng], { icon }).addTo(map).bindPopup(poi.name);
+            });
+        }
+
+        function onMapClick(e) {
+            // Hide start hint
+            const hint = document.getElementById('startHint');
+            if (hint) {
+                hint.classList.add('opacity-0');
+                setTimeout(() => hint.remove(), 500);
+            }
+
+            const { lat, lng } = e.latlng;
+
+            // Remove existing marker
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+            }
+
+            // Create custom icon
+            const customIcon = L.divIcon({
+                html: `
+                    <div class="relative">
+                        <div class="absolute -inset-4 bg-govbr-primary/30 rounded-full pulse-ring"></div>
+                        <div class="w-8 h-8 bg-govbr-primary rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                `,
+                className: '',
+                iconSize: [32, 32],
+                iconAnchor: [16, 32]
+            });
+
+            currentMarker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+
+            // Determine zone
+            const zone = determineZone(lat, lng);
+
+            selectedLocation = {
+                lat,
+                lng,
+                zone,
+                address: getAddressFromCoords(lat, lng)
+            };
+
+            eventData.lat = lat;
+            eventData.lng = lng;
+            eventData.zona = zone.type;
+            eventData.local = selectedLocation.address;
+
+            // Expand bottom sheet and start chat
+            expandBottomSheet();
+            startChatFlow();
+        }
+
+        function determineZone(lat, lng) {
+            for (const [key, zone] of Object.entries(ZONES)) {
+                const [[minLat, minLng], [maxLat, maxLng]] = zone.bounds;
+                if (lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng) {
+                    return zone;
+                }
+            }
+            // Default to private area
+            return {
+                name: "Área Geral",
+                type: "privada",
+                color: "#22c55e",
+                description: "Área Privada",
+                organs: ["Bombeiros", "PM"]
+            };
+        }
+
+        function getAddressFromCoords(lat, lng) {
+            // Mock address generation based on location
+            const addresses = [
+                "Av. Higienópolis, Londrina",
+                "Rua Sergipe, Centro",
+                "Av. JK, Lago Igapó",
+                "R. Bento Munhoz da Rocha, Gleba Palhano"
+            ];
+            return addresses[Math.floor(Math.random() * addresses.length)] + ` (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+        }
+
+        // Bottom Sheet Controls
+        function toggleBottomSheet() {
+            const sheet = document.getElementById('bottomSheet');
+            sheet.classList.toggle('expanded');
+            sheet.classList.toggle('collapsed');
+        }
+
+        function expandBottomSheet() {
+            const sheet = document.getElementById('bottomSheet');
+            sheet.classList.add('expanded');
+            sheet.classList.remove('collapsed');
+        }
+
+        // Chat Flow
+        function startChatFlow() {
+            chatStep = 0;
+            document.getElementById('chatMessages').innerHTML = '';
+
+            // Show location badge
+            const badge = document.getElementById('locationBadge');
+            const text = document.getElementById('locationText');
+            badge.classList.remove('hidden');
+            badge.classList.add('flex');
+            text.textContent = selectedLocation.address;
+
+            // First message
+            addBotMessage(`📍 Local identificado!`, true);
+
+            setTimeout(() => {
+                const zoneInfo = selectedLocation.zone;
+                const zoneColor = zoneInfo.type === 'publica_ambiental' ? 'amber' :
+                    zoneInfo.type === 'publica' ? 'blue' : 'green';
+
+                addBotMessage(`
+                    <div class="bg-${zoneColor}-50 border border-${zoneColor}-200 rounded-xl p-3 mb-2">
+                        <div class="flex items-center gap-2 mb-1">
+                            <div class="w-3 h-3 rounded-full bg-${zoneColor}-500"></div>
+                            <span class="font-semibold text-${zoneColor}-800">${zoneInfo.description}</span>
+                        </div>
+                        <p class="text-xs text-${zoneColor}-600">${zoneInfo.name}</p>
+                    </div>
+                    <p class="text-sm text-slate-600">Órgãos envolvidos: <strong>${zoneInfo.organs.join(', ')}</strong></p>
+                `);
+
+                setTimeout(() => {
+                    addBotMessage("Agora vou fazer algumas perguntas rápidas sobre o seu evento. Vamos lá! 🚀");
+                    setTimeout(() => askEventName(), 800);
+                }, 1000);
+            }, 500);
+        }
+
+        function addBotMessage(content, isFirst = false) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message flex gap-3';
+            messageDiv.innerHTML = `
+                <div class="w-8 h-8 bg-gradient-to-br from-govbr-primary to-govbr-accent rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="bot" class="w-4 h-4 text-white"></i>
+                </div>
+                <div class="bg-slate-100 rounded-2xl rounded-tl-md px-4 py-3 max-w-[280px]">
+                    ${content}
+                </div>
+            `;
+            messagesDiv.appendChild(messageDiv);
+            lucide.createIcons();
+            scrollToBottom();
+        }
+
+        function addUserMessage(content) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message flex gap-3 justify-end';
+            messageDiv.innerHTML = `
+                <div class="bg-govbr-primary text-white rounded-2xl rounded-tr-md px-4 py-3 max-w-[280px]">
+                    ${content}
+                </div>
+            `;
+            messagesDiv.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function showTyping() {
+            const messagesDiv = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typingIndicator';
+            typingDiv.className = 'chat-message flex gap-3';
+            typingDiv.innerHTML = `
+                <div class="w-8 h-8 bg-gradient-to-br from-govbr-primary to-govbr-accent rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="bot" class="w-4 h-4 text-white"></i>
+                </div>
+                <div class="bg-slate-100 rounded-2xl rounded-tl-md px-4 py-3">
+                    <div class="typing-indicator flex gap-1">
+                        <span class="w-2 h-2 bg-slate-400 rounded-full"></span>
+                        <span class="w-2 h-2 bg-slate-400 rounded-full"></span>
+                        <span class="w-2 h-2 bg-slate-400 rounded-full"></span>
+                    </div>
+                </div>
+            `;
+            messagesDiv.appendChild(typingDiv);
+            lucide.createIcons();
+            scrollToBottom();
+        }
+
+        function hideTyping() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('chatContainer');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Chat Questions
+        function askEventName() {
+            chatStep = 1;
+            addBotMessage("Qual é o <strong>nome do evento</strong>? 🎉");
+            renderTextInput('Digite o nome do evento...', (value) => {
+                eventData.nome = value;
+                addUserMessage(value);
+                showTyping();
+                setTimeout(() => {
+                    hideTyping();
+                    askPublico();
+                }, 800);
+            });
+        }
+
+        function askPublico() {
+            chatStep = 2;
+            addBotMessage("Qual a <strong>estimativa de público</strong>? 👥");
+            renderOptions([
+                { label: 'Até 200 pessoas', value: '<200', icon: 'users' },
+                { label: '200 a 500 pessoas', value: '200-500', icon: 'users' },
+                { label: 'Mais de 500 pessoas', value: '>500', icon: 'users' }
+            ], (value, label) => {
+                eventData.publico = value;
+                addUserMessage(label);
+                showTyping();
+                setTimeout(() => {
+                    hideTyping();
+                    askEstrutura();
+                }, 800);
+            });
+        }
+
+        function askEstrutura() {
+            chatStep = 3;
+            addBotMessage("Haverá <strong>estrutura metálica</strong> (palco, tendas, arquibancadas)? 🏗️");
+            renderOptions([
+                { label: 'Sim, haverá estruturas', value: true, icon: 'check' },
+                { label: 'Não, sem estruturas', value: false, icon: 'x' }
+            ], (value, label) => {
+                eventData.estrutura = value;
+                addUserMessage(label);
+                showTyping();
+                setTimeout(() => {
+                    hideTyping();
+                    askMusica();
+                }, 800);
+            });
+        }
+
+        function askMusica() {
+            chatStep = 4;
+            addBotMessage("O evento terá <strong>música ao vivo ou som mecânico</strong>? 🎵");
+            renderOptions([
+                { label: 'Sim, terá música', value: true, icon: 'music' },
+                { label: 'Não terá música', value: false, icon: 'volume-x' }
+            ], (value, label) => {
+                eventData.musica = value;
+                addUserMessage(label);
+                showTyping();
+                setTimeout(() => {
+                    hideTyping();
+                    askMenores();
+                }, 800);
+            });
+        }
+
+        function askMenores() {
+            chatStep = 5;
+            addBotMessage("O evento será <strong>aberto a menores de 18 anos</strong>? 👶");
+            renderOptions([
+                { label: 'Sim, livre para todas as idades', value: true, icon: 'baby' },
+                { label: 'Não, apenas maiores de 18', value: false, icon: 'user-check' }
+            ], (value, label) => {
+                eventData.menores = value;
+                addUserMessage(label);
+                showTyping();
+                setTimeout(() => {
+                    hideTyping();
+                    showSummary();
+                }, 1000);
+            });
+        }
+
+        function showSummary() {
+            chatStep = 6;
+
+            // Calculate risk
+            const riskLevel = calculateRisk();
+
+            const riskBadge = riskLevel === 'baixo'
+                ? `<span class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                    <i data-lucide="zap" class="w-3 h-3"></i> Aprovação Automática
+                   </span>`
+                : `<span class="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
+                    <i data-lucide="clock" class="w-3 h-3"></i> Análise Rápida
+                   </span>`;
+
+            addBotMessage(`
+                <div class="space-y-3">
+                    <p class="font-semibold text-slate-800">📋 Resumo da Solicitação</p>
+                    <div class="bg-white rounded-xl p-3 space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Evento:</span>
+                            <span class="font-medium text-slate-800">${eventData.nome}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Público:</span>
+                            <span class="font-medium text-slate-800">${eventData.publico}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Zona:</span>
+                            <span class="font-medium text-slate-800">${selectedLocation.zone.description}</span>
+                        </div>
+                    </div>
+                    <div class="pt-2">
+                        ${riskBadge}
+                    </div>
+                </div>
+            `);
+
+            setTimeout(() => {
+                addBotMessage("Tudo certo! Posso gerar o <strong>checklist inteligente</strong> com os documentos necessários. 📝");
+                renderFinalButton();
+            }, 1000);
+        }
+
+        function calculateRisk() {
+            // CGSIM 51/57 logic
+            if (eventData.publico === '<200' &&
+                eventData.zona === 'privada' &&
+                !eventData.estrutura) {
+                return 'baixo';
+            }
+            return 'medio';
+        }
+
+        // Input Renderers
+        function renderTextInput(placeholder, callback) {
+            const inputArea = document.getElementById('inputArea');
+            inputArea.innerHTML = `
+                <div class="flex gap-2">
+                    <input 
+                        type="text" 
+                        id="textInput"
+                        placeholder="${placeholder}"
+                        class="flex-1 px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-govbr-primary/50 focus:border-govbr-primary transition-all"
+                    />
+                    <button 
+                        onclick="submitTextInput()"
+                        class="px-4 py-3 bg-govbr-primary text-white rounded-xl hover:bg-govbr-secondary transition-colors"
+                    >
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            `;
+            lucide.createIcons();
+
+            const input = document.getElementById('textInput');
+            input.focus();
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && input.value.trim()) {
+                    callback(input.value.trim());
+                    inputArea.innerHTML = '';
+                }
+            });
+
+            window.submitTextInput = () => {
+                if (input.value.trim()) {
+                    callback(input.value.trim());
+                    inputArea.innerHTML = '';
+                }
+            };
+        }
+
+        function renderOptions(options, callback) {
+            const inputArea = document.getElementById('inputArea');
+            inputArea.innerHTML = `
+                <div class="grid grid-cols-1 gap-2">
+                    ${options.map((opt, idx) => `
+                        <button 
+                            onclick="selectOption(${idx})"
+                            class="flex items-center gap-3 px-4 py-3 bg-slate-100 hover:bg-govbr-primary/10 border border-slate-200 hover:border-govbr-primary rounded-xl transition-all text-left group"
+                        >
+                            <i data-lucide="${opt.icon}" class="w-5 h-5 text-slate-400 group-hover:text-govbr-primary"></i>
+                            <span class="text-sm font-medium text-slate-700 group-hover:text-govbr-primary">${opt.label}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+            lucide.createIcons();
+
+            window.selectOption = (idx) => {
+                callback(options[idx].value, options[idx].label);
+                inputArea.innerHTML = '';
+            };
+        }
+
+        function renderFinalButton() {
+            const inputArea = document.getElementById('inputArea');
+            inputArea.innerHTML = `
+                <button 
+                    onclick="generateChecklist()"
+                    class="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-govbr-primary to-govbr-accent text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
+                >
+                    <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    Gerar Checklist Inteligente
+                </button>
+            `;
+            lucide.createIcons();
+        }
+
+        function generateChecklist() {
+            // Prepare event and documents
+            const documentos = generateDocuments();
+
+            const newEvent = {
+                id: Date.now(),
+                ...eventData,
+                data: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+                status: calculateRisk() === 'baixo' ? 'aprovado_automatico' : 'em_analise',
+                progresso: calculateRisk() === 'baixo' ? 100 : 20,
+                documentos,
+                criadoEm: new Date().toISOString(),
+                imagem: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400"
+            };
+
+            // Get or initialize DB
+            const db = JSON.parse(localStorage.getItem('aprovaEventos_db')) || { user: null, events: [], currentEvent: null };
+
+            // If not authenticated, save a pending draft and ask user to login (login occurs only on create)
+            if (!db.user) {
+                // Save draft so we can resume after login
+                localStorage.setItem('pendingDraft', JSON.stringify(newEvent));
+                // Redirect to login page
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Save event and continue
+            db.currentEvent = newEvent;
+            db.events.push(newEvent);
+            localStorage.setItem('aprovaEventos_db', JSON.stringify(db));
+
+            // Redirect to management page
+            window.location.href = 'gestao-processo.html';
+        }
+
+        function generateDocuments() {
+            const docs = [];
+            const zone = selectedLocation.zone;
+
+            // Always required
+            docs.push({
+                id: 1,
+                orgao: "Corpo de Bombeiros",
+                documento: "AVCB - Auto de Vistoria",
+                status: eventData.estrutura ? "pendente" : "autodeclaracao",
+                tipo: eventData.estrutura ? "upload" : "autodeclaracao",
+                icon: "flame"
+            });
+
+            docs.push({
+                id: 2,
+                orgao: "Polícia Militar",
+                documento: "Comunicação de Evento",
+                status: "pendente",
+                tipo: "autodeclaracao",
+                icon: "shield"
+            });
+
+            // Public area requirements
+            if (zone.type === 'publica' || zone.type === 'publica_ambiental') {
+                docs.push({
+                    id: 3,
+                    orgao: "CMTU",
+                    documento: "Autorização de Uso de Via",
+                    status: "pendente",
+                    tipo: "upload",
+                    icon: "traffic-cone"
+                });
+            }
+
+            // Environmental area
+            if (zone.type === 'publica_ambiental') {
+                docs.push({
+                    id: 4,
+                    orgao: "SEMA",
+                    documento: "Licença Ambiental Simplificada",
+                    status: "pendente",
+                    tipo: "upload",
+                    icon: "leaf"
+                });
+            }
+
+            // Music/Sound
+            if (eventData.musica) {
+                docs.push({
+                    id: 5,
+                    orgao: "ECAD",
+                    documento: "Autorização de Direitos Autorais",
+                    status: "pendente",
+                    tipo: "upload",
+                    icon: "music"
+                });
+            }
+
+            // Minors
+            if (eventData.menores && eventData.publico !== '<200') {
+                docs.push({
+                    id: 6,
+                    orgao: "Vara da Infância",
+                    documento: "Alvará de Participação de Menores",
+                    status: "pendente",
+                    tipo: "upload",
+                    icon: "baby"
+                });
+            }
+
+            // Taxes (always)
+            docs.push({
+                id: 7,
+                orgao: "Fazenda Municipal",
+                documento: "ISS + Taxas de Expediente",
+                status: "pendente",
+                tipo: "pagamento",
+                valor: eventData.publico === '>500' ? 350 : eventData.publico === '200-500' ? 180 : 75,
+                icon: "receipt"
+            });
+
+            return docs;
+        }
+
+        // Map controls
+        function centerOnLondrina() {
+            map.setView(LONDRINA_CENTER, 14);
+        }
+
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        const { latitude, longitude } = pos.coords;
+                        map.setView([latitude, longitude], 16);
+                    },
+                    () => {
+                        alert('Não foi possível obter sua localização. Usando Londrina como padrão.');
+                        centerOnLondrina();
+                    }
+                );
+            }
+        }
+
+        // Check auth only when creating the event (handled in generateChecklist)
+        function checkAuth() {
+            const db = JSON.parse(localStorage.getItem('aprovaEventos_db'));
+            return db && db.user;
+        }
+
+        // Initialize (do NOT force login here; login happens only when user tries to create event)
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+
+            // If the user returned from login with a pending draft, create event and redirect
+            const pending = localStorage.getItem('pendingDraft');
+            if (pending) {
+                try {
+                    const draft = JSON.parse(pending);
+                    const db = JSON.parse(localStorage.getItem('aprovaEventos_db')) || { user: null, events: [], currentEvent: null };
+                    const newEvent = {
+                        id: Date.now(),
+                        ...draft,
+                        criadoEm: new Date().toISOString()
+                    };
+                    db.currentEvent = newEvent;
+                    db.events.push(newEvent);
+                    localStorage.setItem('aprovaEventos_db', JSON.stringify(db));
+                    localStorage.removeItem('pendingDraft');
+                    window.location.href = 'gestao-processo.html';
+                    return;
+                } catch (e) {
+                    console.error('Erro ao restaurar rascunho', e);
+                }
+            }
+
+            // Initial chat message
+            setTimeout(() => {
+                addBotMessage("Olá! 👋 Sou o assistente do <strong>Aprova Eventos</strong>. Clique no mapa para selecionar o local do seu evento.");
+            }, 500);
+        });
+    </script>
+</body>
+
+</html>
