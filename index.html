@@ -208,6 +208,34 @@
                 Criar Evento
             </a>
         </div>
+            <!-- Popup indicativo para criar evento no mobile, integrado ao botão + -->
+            <div id="popupCriarEvento" class="sm:hidden fixed bottom-24 right-6 z-50 bg-gradient-to-r from-govbr-primary to-govbr-accent text-white border-0 rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3 fade-in popup-criar-evento" style="display:none; min-width:220px; max-width:90vw;">
+                <div class="flex items-center gap-2">
+                    <button onclick="window.location.href='nova-solicitacao.html'" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center shadow-lg border-2 border-white/30 hover:bg-white/30 transition-all mr-2">
+                        <i data-lucide="plus" class="w-6 h-6 text-white"></i>
+                    </button>
+                    <span class="text-sm font-medium">Não encontrou seu evento?<br><span class="underline font-semibold cursor-pointer" onclick="window.location.href='nova-solicitacao.html'">Crie um evento agora!</span></span>
+                </div>
+                <button onclick="document.getElementById('popupCriarEvento').style.display='none'" class="ml-2 text-white/70 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <style>
+            @media (max-width: 640px) {
+                .popup-criar-evento {
+                    bottom: 90px !important;
+                    right: 20px !important;
+                    left: auto !important;
+                    transform: none !important;
+                    min-width: 220px;
+                    max-width: 95vw;
+                    box-shadow: 0 8px 32px -8px rgba(19,81,180,0.18);
+                    animation: slideUpPopup 0.4s cubic-bezier(.4,0,.2,1);
+                }
+                @keyframes slideUpPopup {
+                    from { opacity: 0; transform: translateY(30px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+            }
+            </style>
     </main>
 
     <!-- Floating Action Button (Mobile) -->
@@ -256,6 +284,15 @@
     <script>
         // Initialize Lucide
         lucide.createIcons();
+            // Exibe popup indicativo no mobile após 2s, integrado ao botão +
+            setTimeout(function() {
+                if (window.innerWidth < 640) {
+                    var popup = document.getElementById('popupCriarEvento');
+                    popup.style.display = 'flex';
+                    popup.style.opacity = '0';
+                    setTimeout(function(){ popup.style.opacity = '1'; }, 100);
+                }
+            }, 2000);
 
         // Mock events data (extended)
         const mockEvents = [
