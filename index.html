@@ -3,37 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aprova Eventos - Descontinuado</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;800&display=swap" rel="stylesheet">
-
+    <title>Aprova Eventos | Status</title>
     <style>
-        /* CSS Reset e Estrutura */
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        body, html {
-            height: 100%;
-            width: 100%;
+        body {
+            background-color: #050505;
             overflow: hidden;
-            font-family: 'Montserrat', sans-serif;
-            background-color: #000;
-        }
-
-        /* Container principal que segura tudo */
-        .main-container {
-            position: relative;
-            width: 100vw;
+            font-family: 'Share Tech Mono', monospace; /* Fonte estilo sistema/terminal */
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            color: #eee;
         }
 
-        /* Onde a mágica WebGL acontece (o fundo) */
-        #canvas-container {
+        /* O Canvas ocupa a tela toda no fundo */
+        canvas {
             position: absolute;
             top: 0;
             left: 0;
@@ -41,112 +33,237 @@
             height: 100%;
             z-index: 1;
         }
-        
-        /* Overlay escuro para melhorar leitura do texto */
-        .overlay {
+
+        /* Informações extras fixas na tela */
+        .ui-layer {
             position: absolute;
-            top: 0;
-            left: 0;
+            z-index: 2;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5); /* Escurece a imagem de fundo */
-            z-index: 2;
             pointer-events: none; /* Deixa o mouse passar para o canvas */
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
-        /* Conteúdo de Texto */
-        .content {
-            position: relative;
-            z-index: 3;
+        .header {
+            display: flex;
+            justify-content: space-between;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.8rem;
+            color: #444;
+            border-bottom: 1px solid #222;
+            padding-bottom: 20px;
+        }
+
+        .footer {
             text-align: center;
-            color: #fff;
-            padding: 20px;
-            pointer-events: none; /* Importante: permite que o mouse interaja com o fundo */
-            mix-blend-mode: overlay; /* Faz o texto se fundir ligeiramente com as cores do fundo */
+            font-size: 0.75rem;
+            color: #333;
+            letter-spacing: 1px;
         }
 
-        /* Nome do Projeto */
-        .project-name {
-            font-size: 1.5rem;
-            font-weight: 300;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-            color: #e0e0e0;
+        /* Destaque sutil para o nome do projeto no topo */
+        .brand {
+            color: #00ff88; /* Verde Neon suave */
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
         }
 
-        /* Frase Principal */
-        h1 {
-            font-size: 5rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            line-height: 1;
-            background: linear-gradient(45deg, #ff6b6b, #f06595, #845ef7);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradientFade 3s infinite alternate;
-        }
-        
-        @keyframes gradientFade {
-            0% { filter: hue-rotate(0deg); }
-            100% { filter: hue-rotate(30deg); }
-        }
-
-        /* Responsividade */
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 3rem;
-            }
-            .project-name {
-                font-size: 1rem;
-                letter-spacing: 2px;
-            }
-        }
-        @media (max-width: 480px) {
-             h1 {
-                font-size: 2.2rem;
-            }
+        /* Efeito de Scanline (TV antiga) */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0,0,0,0.1) 50%,
+                rgba(0,0,0,0.1)
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 10;
         }
     </style>
 </head>
 <body>
 
-    <div class="main-container">
-        <div id="canvas-container"></div>
-        
-        <div class="overlay"></div>
+    <!-- Efeito de tela antiga -->
+    <div class="scanlines"></div>
 
-        <div class="content">
-            <p class="project-name">Aprova Eventos</p>
-            <h1>Projeto<br>Descontinuado</h1>
+    <!-- Interface Fixa -->
+    <div class="ui-layer">
+        <div class="header">
+            <span class="brand">SYSTEM: APROVA EVENTOS</span>
+            <span>STATUS: OFF</span>
+        </div>
+        <div class="footer">
+            // FIM DA LINHA //
         </div>
     </div>
 
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/hover-effect/dist/hover-effect.umd.js"></script>
+    <!-- Área da Animação -->
+    <canvas id="canvas1"></canvas>
 
     <script>
-        // Configuração da Animação Líquida
-        // Imagem de fundo (Concerto/Luzes desfocadas)
-        const imageURL = "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80";
-        
-        // Imagem de deslocamento (Mapa de distorção - parece uma nuvem ou fumaça cinza)
-        // É isso que dita a forma da "água" quando o mouse mexe.
-        const displacementURL = "https://raw.githubusercontent.com/robin-dela/hover-effect/master/images/displacement.png";
+        const canvas = document.getElementById('canvas1');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        new hoverEffect({
-            parent: document.querySelector('#canvas-container'),
-            intensity: 0.3, // Quão forte é a distorção
-            image1: imageURL,
-            image2: imageURL, // Usamos a mesma imagem para que a distorção ocorra nela mesma
-            displacementImage: displacementURL,
-            speedIn: 1.2,
-            speedOut: 1,
-            hover: false // Desativamos o hover automático para que ele reaja apenas ao movimento do mouse sobre o canvas
+        let particleArray = [];
+        let adjustX = 0;
+        let adjustY = 0;
+
+        // Configuração do Mouse
+        const mouse = {
+            x: null,
+            y: null,
+            radius: 100 // Raio de explosão ao passar o mouse
+        }
+
+        window.addEventListener('mousemove', function(event){
+            mouse.x = event.x;
+            mouse.y = event.y;
         });
+        
+        // Touch events para celular
+        window.addEventListener('touchmove', function(event){
+            mouse.x = event.touches[0].clientX;
+            mouse.y = event.touches[0].clientY;
+        });
+
+        // Configuração da Fonte no Canvas
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 20px Verdana';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // Classe da Partícula
+        class Particle {
+            constructor(x, y){
+                this.x = x;
+                this.y = y;
+                this.size = 2;
+                this.baseX = this.x; // Posição original (memória)
+                this.baseY = this.y;
+                this.density = (Math.random() * 30) + 1; // Peso da partícula
+                this.color = '#e0e0e0';
+            }
+            draw(){
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.fill();
+            }
+            update(){
+                // Física de colisão com o mouse
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                let forceDirectionX = dx / distance;
+                let forceDirectionY = dy / distance;
+                let maxDistance = mouse.radius;
+                let force = (maxDistance - distance) / maxDistance;
+                let directionX = forceDirectionX * force * this.density;
+                let directionY = forceDirectionY * force * this.density;
+
+                if (distance < mouse.radius) {
+                    // Se o mouse estiver perto, a partícula foge (explode)
+                    this.x -= directionX * 5; 
+                    this.y -= directionY * 5;
+                    this.color = '#00ff88'; // Fica verde quando interage
+                } else {
+                    // Se não, volta para a posição original lentamente
+                    if (this.x !== this.baseX){
+                        let dx = this.x - this.baseX;
+                        this.x -= dx/15; // Velocidade de retorno
+                    }
+                    if (this.y !== this.baseY){
+                        let dy = this.y - this.baseY;
+                        this.y -= dy/15;
+                    }
+                    this.color = '#e0e0e0'; // Volta pra cor original
+                }
+            }
+        }
+
+        // Função que converte texto em partículas
+        function init() {
+            particleArray = [];
+            
+            // Texto principal
+            let mainText = "PROJETO";
+            let subText = "DESCONTINUADO";
+            
+            // Responsividade do tamanho da fonte
+            let fontSize = 80;
+            if(window.innerWidth < 768) fontSize = 40;
+            
+            ctx.font = 'bold ' + fontSize + 'px Share Tech Mono';
+            
+            // Renderiza o texto uma vez para ler os pixels
+            // Deslocamento vertical para centralizar
+            let yOffset = -30;
+            ctx.fillText(mainText, canvas.width/2, canvas.height/2 + yOffset - (fontSize/1.5));
+            ctx.fillText(subText, canvas.width/2, canvas.height/2 + yOffset + (fontSize/1.5));
+            
+            // Escaneia a área do canvas para achar onde tem pixels de texto
+            // 'getImageData' pega os dados de pixel da área
+            const textCoordinates = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            // Limpa o canvas para começar a animação limpa
+            ctx.clearRect(0,0, canvas.width, canvas.height);
+
+            // Loop através dos pixels (pulando alguns para performance)
+            let step = 4; // Quanto maior, menos partículas (mais leve)
+            if(window.innerWidth < 768) step = 6; // Menos partículas no celular
+
+            for (let y = 0, y2 = textCoordinates.height; y < y2; y += step){
+                for (let x = 0, x2 = textCoordinates.width; x < x2; x += step){
+                    // Verifica se o pixel não é transparente (alpha > 128)
+                    if (textCoordinates.data[(y * 4 * textCoordinates.width) + (x * 4) + 3] > 128){
+                        let positionX = x;
+                        let positionY = y;
+                        particleArray.push(new Particle(positionX, positionY));
+                    }
+                }
+            }
+        }
+
+        // Loop de Animação
+        function animate(){
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particleArray.length; i++){
+                particleArray[i].draw();
+                particleArray[i].update();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        // Redimensionamento
+        window.addEventListener('resize', function(){
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init();
+        });
+
+        // Inicia
+        init();
+        animate();
+
+        // Reseta posição do mouse quando sai da tela
+        window.addEventListener('mouseout', function(){
+            mouse.x = undefined;
+            mouse.y = undefined;
+        })
+
     </script>
 </body>
 </html>
