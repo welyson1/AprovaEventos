@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aprova Eventos | Status</title>
+    <title>Aprova Eventos | Descontinuado</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-
+        /* Reset e Configuração Básica */
         * {
             margin: 0;
             padding: 0;
@@ -14,277 +14,244 @@
         }
 
         body {
-            background-color: #050505;
+            background-color: #050a14; /* Fundo azul muito escuro, quase preto */
+            color: #ffffff;
+            font-family: 'Poppins', sans-serif;
             overflow: hidden;
-            font-family: 'Share Tech Mono', monospace; /* Fonte estilo sistema/terminal */
             height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #eee;
+            width: 100vw;
+            position: relative;
         }
 
-        /* O Canvas ocupa a tela toda no fundo */
-        canvas {
+        /* Canvas de Fundo (A Animação) */
+        #background-canvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             z-index: 1;
-            touch-action: none; /* Importante para mobile: diz ao navegador que o canvas gerencia o toque */
         }
 
-        /* Informações extras fixas na tela */
-        .ui-layer {
-            position: absolute;
+        /* Container do Conteúdo (O Texto) */
+        .content-container {
+            position: relative;
             z-index: 2;
-            width: 100%;
             height: 100%;
-            pointer-events: none; /* Deixa o mouse passar para o canvas */
-            padding: 20px;
+            width: 100%;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-size: 0.8rem;
-            color: #444;
-            border-bottom: 1px solid #222;
-            padding-bottom: 15px;
-        }
-
-        .footer {
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            font-size: 0.75rem;
-            color: #333;
-            letter-spacing: 1px;
-        }
-
-        /* Destaque sutil para o nome do projeto no topo */
-        .brand {
-            color: #00ff88; /* Verde Neon suave */
-            text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
-        }
-
-        /* Efeito de Scanline (TV antiga) */
-        .scanlines {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: linear-gradient(
-                to bottom,
-                rgba(255,255,255,0),
-                rgba(255,255,255,0) 50%,
-                rgba(0,0,0,0.1) 50%,
-                rgba(0,0,0,0.1)
-            );
-            background-size: 100% 4px;
+            padding: 20px;
+            /* Gradiente radial sutil para focar no centro */
+            background: radial-gradient(circle at center, rgba(5,10,20,0.6) 0%, rgba(5,10,20,0.9) 100%);
             pointer-events: none;
-            z-index: 10;
+        }
+
+        /* Tipografia */
+        .brand-name {
+            font-size: 1.2rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #3498db; /* Azul tecnológico */
+            margin-bottom: 10px;
+            font-weight: 300;
+            text-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+        }
+
+        h1 {
+            font-size: 4rem;
+            line-height: 1.1;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, #34495e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        p.status-message {
+            font-size: 1.1rem;
+            max-width: 600px;
+            line-height: 1.6;
+            color: #bdc3c7;
+            opacity: 0.8;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            .brand-name {
+                font-size: 0.9rem;
+            }
+            p.status-message {
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- Efeito de tela antiga -->
-    <div class="scanlines"></div>
+    <!-- A Mágica (Canvas) -->
+    <canvas id="background-canvas"></canvas>
 
-    <!-- Interface Fixa -->
-    <div class="ui-layer">
-        <div class="header">
-            <span class="brand">SYSTEM: APROVA EVENTOS</span>
-            <span>STATUS: OFF</span>
-        </div>
-        <div class="footer">
-            // FIM DA LINHA //
-        </div>
+    <!-- O Conteúdo Legível -->
+    <div class="content-container">
+        <div class="brand-name">Aprova Eventos</div>
+        <h1>Projeto<br>Descontinuado</h1>
+        <p class="status-message">
+            A conexão foi encerrada. A infraestrutura inteligente foi desligada, mas os dados gerados continuam a inspirar o futuro.
+        </p>
     </div>
 
-    <!-- Área da Animação -->
-    <canvas id="canvas1"></canvas>
-
     <script>
-        const canvas = document.getElementById('canvas1');
+        const canvas = document.getElementById('background-canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
 
-        let particleArray = [];
-        let adjustX = 0;
-        let adjustY = 0;
+        let width, height;
+        let particles = [];
 
-        // Configuração do Mouse
+        // Configuração Smart City
+        const config = {
+            particleCount: 0, // Será calculado baseado na tela
+            connectionDistance: 110, // Distância para conectar nós
+            mouseDistance: 180, // Distância para conectar ao mouse
+            particleSpeed: 0.5, // Velocidade dos dados
+            baseColor: 'rgba(41, 128, 185, ', // Azul base
+            highlightColor: 'rgba(0, 255, 255, ' // Ciano para destaque
+        };
+
         const mouse = {
             x: null,
-            y: null,
-            radius: 100 // Raio de explosão ao passar o mouse
+            y: null
+        };
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Ajusta quantidade de nós (sensores) baseado no tamanho da tela
+            // PC: ~100, Mobile: ~40
+            config.particleCount = (width * height) / 10000;
+            if (width < 768) config.particleCount = 40; 
+            if (config.particleCount > 130) config.particleCount = 130; // Limite máximo
+
+            init();
         }
 
-        window.addEventListener('mousemove', function(event){
-            mouse.x = event.x;
-            mouse.y = event.y;
+        window.addEventListener('resize', resize);
+        
+        // Interação Mouse/Toque
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
         });
         
-        // --- CORREÇÕES PARA MOBILE (TOUCH) ---
-        
-        // Touch Move: Atualiza posição e previne scroll
-        window.addEventListener('touchmove', function(event){
-            event.preventDefault(); 
-            mouse.x = event.touches[0].clientX;
-            mouse.y = event.touches[0].clientY;
-        }, { passive: false });
+        window.addEventListener('touchmove', (e) => {
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+        }, { passive: true });
 
-        // Touch Start: Reage imediatamente ao toque
-        window.addEventListener('touchstart', function(event){
-            event.preventDefault();
-            mouse.x = event.touches[0].clientX;
-            mouse.y = event.touches[0].clientY;
-            mouse.radius = 80; // Raio um pouco menor no celular para precisão
-        }, { passive: false });
-
-        // Touch End: Reseta quando tira o dedo
-        window.addEventListener('touchend', function(){
-            mouse.x = undefined;
-            mouse.y = undefined;
+        window.addEventListener('mouseout', () => {
+            mouse.x = null;
+            mouse.y = null;
         });
 
-        // -------------------------------------
+        window.addEventListener('touchend', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
 
-        // Configuração da Fonte no Canvas
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 20px Verdana';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
-        // Classe da Partícula
-        class Particle {
-            constructor(x, y){
-                this.x = x;
-                this.y = y;
-                this.size = 2;
-                this.baseX = this.x; // Posição original (memória)
-                this.baseY = this.y;
-                this.density = (Math.random() * 30) + 1; // Peso da partícula
-                this.color = '#e0e0e0';
+        // Classe "Nó da Cidade" (City Node)
+        class Node {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * config.particleSpeed;
+                this.vy = (Math.random() - 0.5) * config.particleSpeed;
+                this.size = Math.random() * 2 + 1; // Tamanho do nó
             }
-            draw(){
-                ctx.fillStyle = this.color;
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Rebater nas bordas (Manter os dados dentro da cidade)
+                if (this.x < 0 || this.x > width) this.vx = -this.vx;
+                if (this.y < 0 || this.y > height) this.vy = -this.vy;
+            }
+
+            draw() {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.closePath();
+                ctx.fillStyle = config.highlightColor + '0.7)'; // Ciano brilhante
                 ctx.fill();
             }
-            update(){
-                // Física de colisão com o mouse
-                let dx = mouse.x - this.x;
-                let dy = mouse.y - this.y;
-                let distance = Math.sqrt(dx * dx + dy * dy);
-                let forceDirectionX = dx / distance;
-                let forceDirectionY = dy / distance;
-                let maxDistance = mouse.radius;
-                let force = (maxDistance - distance) / maxDistance;
-                let directionX = forceDirectionX * force * this.density;
-                let directionY = forceDirectionY * force * this.density;
-
-                if (distance < mouse.radius) {
-                    // Se o mouse estiver perto, a partícula foge (explode)
-                    this.x -= directionX * 5; 
-                    this.y -= directionY * 5;
-                    this.color = '#00ff88'; // Fica verde quando interage
-                } else {
-                    // Se não, volta para a posição original lentamente
-                    if (this.x !== this.baseX){
-                        let dx = this.x - this.baseX;
-                        this.x -= dx/15; // Velocidade de retorno
-                    }
-                    if (this.y !== this.baseY){
-                        let dy = this.y - this.baseY;
-                        this.y -= dy/15;
-                    }
-                    this.color = '#e0e0e0'; // Volta pra cor original
-                }
-            }
         }
 
-        // Função que converte texto em partículas
         function init() {
-            particleArray = [];
-            
-            // Texto principal
-            let mainText = "PROJETO";
-            let subText = "DESCONTINUADO";
-            
-            // Responsividade do tamanho da fonte e densidade
-            let fontSize = 80;
-            let step = 4; // Densidade normal (PC)
-
-            if(window.innerWidth < 768) {
-                fontSize = 35; // Fonte menor no celular para caber a palavra
-                step = 8; // Menos partículas no celular (Performance)
+            particles = [];
+            for (let i = 0; i < config.particleCount; i++) {
+                particles.push(new Node());
             }
-            
-            ctx.font = 'bold ' + fontSize + 'px Share Tech Mono';
-            
-            // Renderiza o texto uma vez para ler os pixels
-            // Deslocamento vertical para centralizar
-            let yOffset = -30;
-            ctx.fillText(mainText, canvas.width/2, canvas.height/2 + yOffset - (fontSize/1.5));
-            ctx.fillText(subText, canvas.width/2, canvas.height/2 + yOffset + (fontSize/1.5));
-            
-            // Escaneia a área do canvas para achar onde tem pixels de texto
-            // 'getImageData' pega os dados de pixel da área
-            const textCoordinates = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            
-            // Limpa o canvas para começar a animação limpa
-            ctx.clearRect(0,0, canvas.width, canvas.height);
+        }
 
-            // Loop através dos pixels
-            for (let y = 0, y2 = textCoordinates.height; y < y2; y += step){
-                for (let x = 0, x2 = textCoordinates.width; x < x2; x += step){
-                    // Verifica se o pixel não é transparente (alpha > 128)
-                    if (textCoordinates.data[(y * 4 * textCoordinates.width) + (x * 4) + 3] > 128){
-                        let positionX = x;
-                        let positionY = y;
-                        particleArray.push(new Particle(positionX, positionY));
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, width, height);
+
+            // Atualiza e desenha partículas
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+
+                // Conectar partículas entre si (A Rede)
+                for (let j = i; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < config.connectionDistance) {
+                        ctx.beginPath();
+                        // Opacidade baseada na distância (quanto mais perto, mais forte)
+                        const opacity = 1 - (distance / config.connectionDistance);
+                        ctx.strokeStyle = config.baseColor + opacity + ')';
+                        ctx.lineWidth = 1;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+
+                // Conectar partículas ao Mouse (O Hub Humano)
+                if (mouse.x != null) {
+                    const dx = mouse.x - particles[i].x;
+                    const dy = mouse.y - particles[i].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < config.mouseDistance) {
+                        ctx.beginPath();
+                        const opacity = 1 - (distance / config.mouseDistance);
+                        // Conexão com o mouse é mais brilhante (Ciano)
+                        ctx.strokeStyle = config.highlightColor + opacity + ')'; 
+                        ctx.lineWidth = 1.5;
+                        ctx.moveTo(mouse.x, mouse.y);
+                        ctx.lineTo(particles[i].x, particles[i].y);
+                        ctx.stroke();
                     }
                 }
             }
         }
-
-        // Loop de Animação
-        function animate(){
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (let i = 0; i < particleArray.length; i++){
-                particleArray[i].draw();
-                particleArray[i].update();
-            }
-            requestAnimationFrame(animate);
-        }
-
-        // Redimensionamento
-        window.addEventListener('resize', function(){
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            init();
-        });
 
         // Inicia
-        init();
+        resize();
         animate();
-
-        // Reseta posição do mouse quando sai da tela (PC)
-        window.addEventListener('mouseout', function(){
-            mouse.x = undefined;
-            mouse.y = undefined;
-        })
 
     </script>
 </body>
