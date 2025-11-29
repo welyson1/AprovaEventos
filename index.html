@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Projeto Descontinuado</title>
+    <title>Aprova Eventos - Descontinuado</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;800&display=swap" rel="stylesheet">
+
     <style>
-        /* CSS Básico e Reset */
+        /* CSS Reset e Estrutura */
         * {
             margin: 0;
             padding: 0;
@@ -15,180 +17,135 @@
         body, html {
             height: 100%;
             width: 100%;
-            overflow: hidden; /* Evita barras de rolagem */
-            font-family: 'Courier New', Courier, monospace; /* Fonte estilo terminal */
-            background-color: #0f0f1f; /* Fundo escuro */
-            color: #ffffff;
+            overflow: hidden;
+            font-family: 'Montserrat', sans-serif;
+            background-color: #000;
         }
 
-        /* Container do Fundo Animado */
-        #particles-js {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            z-index: 1; /* Fica atrás do texto */
-        }
-
-        /* Container do Texto */
-        .content {
+        /* Container principal que segura tudo */
+        .main-container {
             position: relative;
-            z-index: 2; /* Fica na frente da animação */
+            width: 100vw;
+            height: 100vh;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            pointer-events: none; /* Permite que o mouse interaja com as partículas através do texto */
+        }
+
+        /* Onde a mágica WebGL acontece (o fundo) */
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        /* Overlay escuro para melhorar leitura do texto */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); /* Escurece a imagem de fundo */
+            z-index: 2;
+            pointer-events: none; /* Deixa o mouse passar para o canvas */
+        }
+
+        /* Conteúdo de Texto */
+        .content {
+            position: relative;
+            z-index: 3;
             text-align: center;
-            padding: 0 20px;
+            color: #fff;
+            padding: 20px;
+            pointer-events: none; /* Importante: permite que o mouse interaja com o fundo */
+            mix-blend-mode: overlay; /* Faz o texto se fundir ligeiramente com as cores do fundo */
         }
 
-        /* Estilização da Frase */
-        h1 {
-            font-size: 3rem;
-            font-weight: lighter;
-            letter-spacing: 5px;
+        /* Nome do Projeto */
+        .project-name {
+            font-size: 1.5rem;
+            font-weight: 300;
+            letter-spacing: 4px;
             text-transform: uppercase;
-            opacity: 0.9;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-            animation: fadeIn 2s ease-in-out;
+            margin-bottom: 10px;
+            color: #e0e0e0;
         }
 
-        p {
-            margin-top: 15px;
-            font-size: 1rem;
-            color: #888;
-            animation: fadeIn 3s ease-in-out;
+        /* Frase Principal */
+        h1 {
+            font-size: 5rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            line-height: 1;
+            background: linear-gradient(45deg, #ff6b6b, #f06595, #845ef7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientFade 3s infinite alternate;
+        }
+        
+        @keyframes gradientFade {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(30deg); }
         }
 
-        /* Animação de entrada do texto */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 0.9; transform: translateY(0); }
-        }
-
-        /* Responsividade para celulares */
+        /* Responsividade */
         @media (max-width: 768px) {
             h1 {
-                font-size: 1.8rem;
+                font-size: 3rem;
+            }
+            .project-name {
+                font-size: 1rem;
                 letter-spacing: 2px;
+            }
+        }
+        @media (max-width: 480px) {
+             h1 {
+                font-size: 2.2rem;
             }
         }
     </style>
 </head>
 <body>
 
-    <div id="particles-js"></div>
+    <div class="main-container">
+        <div id="canvas-container"></div>
+        
+        <div class="overlay"></div>
 
-    <div class="content">
-        <h1>Projeto Descontinuado</h1>
-        <p>Agradecemos o seu interesse.</p>
+        <div class="content">
+            <p class="project-name">Aprova Eventos</p>
+            <h1>Projeto<br>Descontinuado</h1>
+        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/hover-effect/dist/hover-effect.umd.js"></script>
 
     <script>
-        particlesJS("particles-js", {
-            "particles": {
-                "number": {
-                    "value": 100, /* Quantidade de partículas */
-                    "density": {
-                        "enable": true,
-                        "value_area": 800
-                    }
-                },
-                "color": {
-                    "value": "#ffffff"
-                },
-                "shape": {
-                    "type": "circle",
-                    "stroke": {
-                        "width": 0,
-                        "color": "#000000"
-                    }
-                },
-                "opacity": {
-                    "value": 0.5,
-                    "random": true,
-                    "anim": {
-                        "enable": true,
-                        "speed": 1,
-                        "opacity_min": 0.1,
-                        "sync": false
-                    }
-                },
-                "size": {
-                    "value": 3,
-                    "random": true,
-                    "anim": {
-                        "enable": false,
-                        "speed": 40,
-                        "size_min": 0.1,
-                        "sync": false
-                    }
-                },
-                "line_linked": {
-                    "enable": true,
-                    "distance": 150,
-                    "color": "#ffffff",
-                    "opacity": 0.4,
-                    "width": 1
-                },
-                "move": {
-                    "enable": true,
-                    "speed": 2, /* Velocidade de movimento */
-                    "direction": "none",
-                    "random": false,
-                    "straight": false,
-                    "out_mode": "out",
-                    "bounce": false,
-                    "attract": {
-                        "enable": false,
-                        "rotateX": 600,
-                        "rotateY": 1200
-                    }
-                }
-            },
-            "interactivity": {
-                "detect_on": "canvas",
-                "events": {
-                    "onhover": {
-                        "enable": true,
-                        "mode": "grab" /* O efeito do cursor: conecta linhas ao passar o mouse */
-                    },
-                    "onclick": {
-                        "enable": true,
-                        "mode": "push"
-                    },
-                    "resize": true
-                },
-                "modes": {
-                    "grab": {
-                        "distance": 140,
-                        "line_linked": {
-                            "opacity": 1
-                        }
-                    },
-                    "bubble": {
-                        "distance": 400,
-                        "size": 40,
-                        "duration": 2,
-                        "opacity": 8,
-                        "speed": 3
-                    },
-                    "repulse": {
-                        "distance": 200,
-                        "duration": 0.4
-                    },
-                    "push": {
-                        "particles_nb": 4
-                    },
-                    "remove": {
-                        "particles_nb": 2
-                    }
-                }
-            },
-            "retina_detect": true
+        // Configuração da Animação Líquida
+        // Imagem de fundo (Concerto/Luzes desfocadas)
+        const imageURL = "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80";
+        
+        // Imagem de deslocamento (Mapa de distorção - parece uma nuvem ou fumaça cinza)
+        // É isso que dita a forma da "água" quando o mouse mexe.
+        const displacementURL = "https://raw.githubusercontent.com/robin-dela/hover-effect/master/images/displacement.png";
+
+        new hoverEffect({
+            parent: document.querySelector('#canvas-container'),
+            intensity: 0.3, // Quão forte é a distorção
+            image1: imageURL,
+            image2: imageURL, // Usamos a mesma imagem para que a distorção ocorra nela mesma
+            displacementImage: displacementURL,
+            speedIn: 1.2,
+            speedOut: 1,
+            hover: false // Desativamos o hover automático para que ele reaja apenas ao movimento do mouse sobre o canvas
         });
     </script>
 </body>
