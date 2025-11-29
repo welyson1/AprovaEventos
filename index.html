@@ -32,6 +32,7 @@
             width: 100%;
             height: 100%;
             z-index: 1;
+            touch-action: none; /* Importante para mobile: diz ao navegador que o canvas gerencia o toque */
         }
 
         /* Informações extras fixas na tela */
@@ -41,7 +42,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none; /* Deixa o mouse passar para o canvas */
-            padding: 40px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -55,7 +56,7 @@
             font-size: 0.8rem;
             color: #444;
             border-bottom: 1px solid #222;
-            padding-bottom: 20px;
+            padding-bottom: 15px;
         }
 
         .footer {
@@ -132,11 +133,30 @@
             mouse.y = event.y;
         });
         
-        // Touch events para celular
+        // --- CORREÇÕES PARA MOBILE (TOUCH) ---
+        
+        // Touch Move: Atualiza posição e previne scroll
         window.addEventListener('touchmove', function(event){
+            event.preventDefault(); 
             mouse.x = event.touches[0].clientX;
             mouse.y = event.touches[0].clientY;
+        }, { passive: false });
+
+        // Touch Start: Reage imediatamente ao toque
+        window.addEventListener('touchstart', function(event){
+            event.preventDefault();
+            mouse.x = event.touches[0].clientX;
+            mouse.y = event.touches[0].clientY;
+            mouse.radius = 80; // Raio um pouco menor no celular para precisão
+        }, { passive: false });
+
+        // Touch End: Reseta quando tira o dedo
+        window.addEventListener('touchend', function(){
+            mouse.x = undefined;
+            mouse.y = undefined;
         });
+
+        // -------------------------------------
 
         // Configuração da Fonte no Canvas
         ctx.fillStyle = 'white';
@@ -202,9 +222,14 @@
             let mainText = "PROJETO";
             let subText = "DESCONTINUADO";
             
-            // Responsividade do tamanho da fonte
+            // Responsividade do tamanho da fonte e densidade
             let fontSize = 80;
-            if(window.innerWidth < 768) fontSize = 40;
+            let step = 4; // Densidade normal (PC)
+
+            if(window.innerWidth < 768) {
+                fontSize = 35; // Fonte menor no celular para caber a palavra
+                step = 8; // Menos partículas no celular (Performance)
+            }
             
             ctx.font = 'bold ' + fontSize + 'px Share Tech Mono';
             
@@ -221,10 +246,7 @@
             // Limpa o canvas para começar a animação limpa
             ctx.clearRect(0,0, canvas.width, canvas.height);
 
-            // Loop através dos pixels (pulando alguns para performance)
-            let step = 4; // Quanto maior, menos partículas (mais leve)
-            if(window.innerWidth < 768) step = 6; // Menos partículas no celular
-
+            // Loop através dos pixels
             for (let y = 0, y2 = textCoordinates.height; y < y2; y += step){
                 for (let x = 0, x2 = textCoordinates.width; x < x2; x += step){
                     // Verifica se o pixel não é transparente (alpha > 128)
@@ -258,7 +280,7 @@
         init();
         animate();
 
-        // Reseta posição do mouse quando sai da tela
+        // Reseta posição do mouse quando sai da tela (PC)
         window.addEventListener('mouseout', function(){
             mouse.x = undefined;
             mouse.y = undefined;
